@@ -29,7 +29,7 @@
             <div
               class="w-12 h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mx-auto mb-3"
             >
-              <span class="text-xl">🏥</span>
+              <img src="/logo.png" alt="SeuramoeSihat" class="w-12 h-12 object-cover rounded-full" />
             </div>
             <h1 class="text-xl font-bold text-white">SeuramoeSihat</h1>
             <p class="text-white/60 text-xs mt-1">Masuk ke akun Anda</p>
@@ -194,21 +194,6 @@
               </template>
             </button>
 
-            <!-- Divider -->
-            <div class="flex items-center gap-3 my-2">
-              <div class="flex-1 border-t border-white/5" />
-              <span class="text-xs text-white/40">atau</span>
-              <div class="flex-1 border-t border-white/5" />
-            </div>
-
-            <!-- Google -->
-            <button
-              type="button"
-              class="w-full h-10 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-white/80 hover:text-white text-xs font-medium flex items-center justify-center gap-2 transition-all duration-300"
-            >
-              <span class="font-bold">G</span>
-              Masuk dengan Google
-            </button>
           </form>
 
           <p class="text-center text-xs text-white/60 mt-5">
@@ -223,23 +208,19 @@
         </div>
       </div>
 
-      <div class="mt-4 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center">
-        <p class="text-xs text-white/50">
-          Demo: <strong class="text-white/80">pasien@demo.com</strong> /
-          <strong class="text-white/80">password123</strong>
-        </p>
-      </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import Badge from '../../components/ui/Badge.vue'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const email = ref('')
@@ -258,18 +239,20 @@ async function handleLogin() {
   loading.value = true
   error.value = ''
 
-  if (email.value === 'pasien@demo.com' && password.value === 'password123') {
-    localStorage.setItem('token', 'demo-token')
-    setTimeout(() => router.push('/'), 800)
-    return
-  }
-
-  const berhasil = await auth.login(email.value, password.value)
+  const role = await auth.login(email.value, password.value)
   loading.value = false
-  if (berhasil) {
-    router.push('/')
+
+  if (role) {
+    // Admin langsung ke dashboard admin
+    if (role === 'admin') {
+      router.push('/admin')
+    } else {
+      // Redirect ke halaman asal jika ada, atau ke home
+      const redirect = route.query.redirect || '/'
+      router.push(redirect)
+    }
   } else {
-    error.value = auth.error
+    error.value = auth.error || 'Email atau password salah'
   }
 }
 </script>

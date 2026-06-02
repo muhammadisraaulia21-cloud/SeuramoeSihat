@@ -4,8 +4,8 @@
     <nav class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
       <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center">
-            <span class="text-white text-lg">🏥</span>
+          <div class="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center">
+            <img src="/logo.png" alt="SeuramoeSihat" class="w-full h-full object-contain" />
           </div>
           <span class="text-lg font-semibold text-gray-800">SeuramoeSihat</span>
         </div>
@@ -23,16 +23,25 @@
           >
         </div>
         <div class="flex items-center gap-3">
-          <RouterLink
-            to="/login"
-            class="text-sm text-gray-600 hover:text-emerald-600 transition-colors font-medium"
-            >Masuk</RouterLink
-          >
-          <RouterLink
-            to="/register"
-            class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-            >Daftar</RouterLink
-          >
+          <template v-if="authStore.isLoggedIn">
+            <span class="text-sm text-gray-600 font-medium hidden md:block">Halo, {{ authStore.namaUser }}</span>
+            <button
+              @click="handleLogout"
+              class="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+            >Keluar</button>
+          </template>
+          <template v-else>
+            <RouterLink
+              to="/login"
+              class="text-sm text-gray-600 hover:text-emerald-600 transition-colors font-medium"
+              >Masuk</RouterLink
+            >
+            <RouterLink
+              to="/register"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
+              >Daftar</RouterLink
+            >
+          </template>
         </div>
       </div>
     </nav>
@@ -238,7 +247,20 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <div
+          <!-- Loading skeleton -->
+          <div v-if="loadingDokter" v-for="i in 6" :key="i"
+            class="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse">
+            <div class="flex gap-4 mb-4">
+              <div class="w-12 h-12 bg-gray-200 rounded-full"></div>
+              <div class="flex-1 space-y-2">
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="h-8 bg-gray-200 rounded-xl"></div>
+          </div>
+          <!-- Data dokter dari API -->
+          <div v-else
             v-for="dokter in filteredDokter"
             :key="dokter.nama"
             class="bg-white rounded-2xl p-5 border border-gray-100 hover:border-emerald-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
@@ -273,7 +295,7 @@
             </div>
             <button
               :disabled="!dokter.tersedia"
-              @click="$router.push('/antrian')"
+              @click="bookingDokter(dokter)"
               class="w-full py-2.5 rounded-xl text-xs font-medium transition-all duration-200"
               :class="
                 dokter.tersedia
@@ -288,46 +310,14 @@
       </div>
     </section>
 
-    <!-- CTA -->
-    <section class="py-20 px-6 bg-emerald-600 relative overflow-hidden">
-      <div
-        class="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none"
-      />
-      <div
-        class="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/3 pointer-events-none"
-      />
-      <div class="max-w-3xl mx-auto text-center relative">
-        <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">
-          Siap untuk berobat lebih mudah?
-        </h2>
-        <p class="text-emerald-100 text-sm mb-8 max-w-md mx-auto">
-          Bergabung dengan ribuan pasien yang sudah merasakan kemudahan layanan SeuramoeSihat.
-        </p>
-        <div class="flex items-center justify-center gap-3 flex-wrap">
-          <RouterLink
-            to="/register"
-            class="bg-white text-emerald-700 font-semibold text-sm px-6 py-3 rounded-xl hover:bg-emerald-50 transition-colors"
-          >
-            Daftar Gratis
-          </RouterLink>
-          <RouterLink
-            to="/cari-dokter"
-            class="border border-emerald-400 text-white font-medium text-sm px-6 py-3 rounded-xl hover:bg-emerald-500 transition-colors"
-          >
-            Cari Dokter
-          </RouterLink>
-        </div>
-      </div>
-    </section>
-
     <!-- FOOTER -->
     <footer class="bg-gray-900 text-gray-400 py-12 px-6">
       <div class="max-w-6xl mx-auto">
         <div class="flex flex-col md:flex-row items-start justify-between gap-8 mb-10">
           <div>
             <div class="flex items-center gap-2 mb-3">
-              <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                <span class="text-white text-sm">🏥</span>
+              <div class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+                <img src="/logo.png" alt="SeuramoeSihat" class="w-full h-full object-contain" />
               </div>
               <span class="text-white font-semibold">SeuramoeSihat</span>
             </div>
@@ -366,7 +356,22 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '../api/axios'
+import { useAuthStore } from '../stores/auth'
 
+const router = useRouter()
+const authStore = useAuthStore()
+
+async function handleLogout() {
+  try {
+    await authStore.logout()
+  } catch {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+  router.push('/login')
+}
 const search = ref('')
 const titleNumber = ref(0)
 const titles = [
@@ -382,6 +387,7 @@ onMounted(() => {
   interval = setInterval(() => {
     titleNumber.value = (titleNumber.value + 1) % titles.length
   }, 2000)
+  loadDokter()
 })
 onUnmounted(() => clearInterval(interval))
 
@@ -392,139 +398,58 @@ const stats = [
 ]
 
 const layanans = [
-  {
-    icon: '📋',
-    title: 'Antrian Online',
-    desc: 'Ambil nomor antrian dari rumah tanpa perlu datang lebih awal.',
-    link: '/antrian',
-    bgClass: 'bg-emerald-50',
-  },
-  {
-    icon: '💬',
-    title: 'Konsultasi Chat',
-    desc: 'Tanya keluhan ringan langsung ke dokter via pesan teks.',
-    link: '/cari-dokter',
-    bgClass: 'bg-blue-50',
-  },
-  {
-    icon: '📄',
-    title: 'Rekam Medis',
-    desc: 'Riwayat pemeriksaan tersimpan digital dan bisa diakses kapan saja.',
-    link: '/rekam-medis',
-    bgClass: 'bg-purple-50',
-  },
-  {
-    icon: '🔔',
-    title: 'Pengingat Obat',
-    desc: 'Dapatkan notifikasi jadwal minum obat agar tidak terlewat.',
-    link: '/profil',
-    bgClass: 'bg-amber-50',
-  },
+  { icon: '📋', title: 'Antrian Online',   desc: 'Ambil nomor antrian dari rumah tanpa perlu datang lebih awal.',          link: '/antrian',    bgClass: 'bg-emerald-50' },
+  { icon: '💬', title: 'Konsultasi Chat',  desc: 'Tanya keluhan ringan langsung ke dokter via pesan teks.',                link: '/konsultasi', bgClass: 'bg-blue-50'    },
+  { icon: '📄', title: 'Rekam Medis',      desc: 'Riwayat pemeriksaan tersimpan digital dan bisa diakses kapan saja.',     link: '/rekam-medis',bgClass: 'bg-purple-50'  },
+  { icon: '👤', title: 'Profil Saya',      desc: 'Kelola data diri dan informasi kesehatan Anda dalam satu tempat yang mudah diakses.',  link: '/profil',     bgClass: 'bg-teal-50'    },
 ]
 
 const steps = [
-  {
-    title: 'Cari dokter atau faskes',
-    desc: 'Temukan dokter terdekat berdasarkan spesialisasi dan ketersediaan jadwal hari ini.',
-  },
-  {
-    title: 'Booking antrian online',
-    desc: 'Pilih jadwal dan ambil nomor antrian dari mana saja tanpa harus antre fisik.',
-  },
-  {
-    title: 'Datang & diperiksa',
-    desc: 'Pantau status antrian real-time dan datang saat giliran Anda hampir tiba.',
-  },
+  { title: 'Cari dokter atau faskes',  desc: 'Temukan dokter terdekat berdasarkan spesialisasi dan ketersediaan jadwal hari ini.' },
+  { title: 'Booking antrian online',   desc: 'Pilih jadwal dan ambil nomor antrian dari mana saja tanpa harus antre fisik.' },
+  { title: 'Datang & diperiksa',       desc: 'Pantau status antrian real-time dan datang saat giliran Anda hampir tiba.' },
 ]
 
 const filters = ['Semua', 'Dokter Umum', 'Spesialis Anak', 'Gigi', 'Kandungan']
 const activeFilter = ref('Semua')
 
-const dokters = [
-  {
-    inisial: 'RH',
-    nama: 'dr. Rahmat Hidayat',
-    spesialis: 'Dokter Umum',
-    faskes: 'Puskesmas Sigli',
-    jadwal: '08.00–12.00',
-    kuota: 6,
-    rating: '4.9',
-    tersedia: true,
-    kategori: 'Dokter Umum',
-    avatarBg: '#E1F5EE',
-    avatarColor: '#0F6E56',
-  },
-  {
-    inisial: 'SA',
-    nama: 'dr. Siti Aisyah, Sp.A',
-    spesialis: 'Spesialis Anak',
-    faskes: 'Klinik Sehat Bersama',
-    jadwal: '09.00–14.00',
-    kuota: 3,
-    rating: '4.8',
-    tersedia: true,
-    kategori: 'Spesialis Anak',
-    avatarBg: '#E6F1FB',
-    avatarColor: '#185FA5',
-  },
-  {
-    inisial: 'HN',
-    nama: 'dr. Harun Nasution',
-    spesialis: 'Dokter Gigi',
-    faskes: 'Puskesmas Mila',
-    jadwal: '10.00–13.00',
-    kuota: 0,
-    rating: '4.7',
-    tersedia: false,
-    kategori: 'Gigi',
-    avatarBg: '#FAEEDA',
-    avatarColor: '#854F0B',
-  },
-  {
-    inisial: 'NF',
-    nama: 'dr. Nadia Fitri, Sp.OG',
-    spesialis: 'Kandungan',
-    faskes: 'RS Umum Sigli',
-    jadwal: '13.00–17.00',
-    kuota: 4,
-    rating: '4.9',
-    tersedia: true,
-    kategori: 'Kandungan',
-    avatarBg: '#FBEAF0',
-    avatarColor: '#993556',
-  },
-  {
-    inisial: 'AM',
-    nama: 'dr. Ahmad Marzuki',
-    spesialis: 'Penyakit Dalam',
-    faskes: 'RS Umum Sigli',
-    jadwal: '08.00–11.00',
-    kuota: 2,
-    rating: '4.8',
-    tersedia: true,
-    kategori: 'Dokter Umum',
-    avatarBg: '#EEEDFE',
-    avatarColor: '#534AB7',
-  },
-  {
-    inisial: 'YS',
-    nama: 'dr. Yusra Safrina',
-    spesialis: 'Dokter Umum',
-    faskes: 'Puskesmas Kembang Tanjong',
-    jadwal: '08.00–12.00',
-    kuota: 8,
-    rating: '4.6',
-    tersedia: true,
-    kategori: 'Dokter Umum',
-    avatarBg: '#E1F5EE',
-    avatarColor: '#0F6E56',
-  },
-]
+// Data dokter dari API
+const dokters = ref([])
+const loadingDokter = ref(false)
+
+async function loadDokter() {
+  loadingDokter.value = true
+  try {
+    const res = await api.get('/dokter')
+    dokters.value = res.data.data.map((d) => ({
+      id:          d.id,
+      inisial:     d.inisial,
+      nama:        d.nama,
+      spesialis:   d.spesialis,
+      faskes:      d.faskes,
+      jadwal:      d.jadwal,
+      kuota:       d.kuota,
+      rating:      d.rating,
+      tersedia:    d.tersedia,
+      kategori:    d.kategori,
+      avatarBg:    d.avatar_bg,
+      avatarColor: d.avatar_color,
+    }))
+  } catch {
+    // fallback diam jika gagal
+  } finally {
+    loadingDokter.value = false
+  }
+}
 
 const filteredDokter = computed(() => {
-  if (activeFilter.value === 'Semua') return dokters
-  return dokters.filter((d) => d.kategori === activeFilter.value)
+  if (activeFilter.value === 'Semua') return dokters.value
+  return dokters.value.filter((d) => d.kategori === activeFilter.value)
 })
+
+function bookingDokter(dokter) {
+  router.push('/booking/' + dokter.id)
+}
 </script>
 
 <style scoped>
