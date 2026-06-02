@@ -28,7 +28,7 @@
             <div
               class="w-12 h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mx-auto mb-3"
             >
-              <span class="text-xl">🏥</span>
+              <img src="/logo.png" alt="SeuramoeSihat" class="w-8 h-8 object-contain" />
             </div>
             <h1 class="text-xl font-bold text-white">Buat Akun Baru</h1>
             <p class="text-white/60 text-xs mt-1">Daftar dan mulai gunakan SeuramoeSihat</p>

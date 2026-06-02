@@ -42,6 +42,19 @@ const routes = [
     meta: { requiresAuth: true },
   },
   { path: '/lupa-password', component: () => import('../views/auth/LupaPassword.vue') },
+
+  // ─── Admin ────────────────────────────────────────────────────────────────
+  {
+    path: '/admin',
+    component: () => import('../views/admin/AdminLayout.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      { path: '',        component: () => import('../views/admin/Dashboard.vue') },
+      { path: 'antrian', component: () => import('../views/admin/AdminAntrian.vue') },
+      { path: 'dokter',  component: () => import('../views/admin/AdminDokter.vue') },
+      { path: 'pasien',  component: () => import('../views/admin/AdminPasien.vue') },
+    ],
+  },
 ]
 
 const router = createRouter({
@@ -51,11 +64,25 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  const user  = JSON.parse(localStorage.getItem('user') || 'null')
+
   if (to.meta.requiresAuth && !token) {
-    next('/login')
-  } else {
-    next()
+    next({ path: '/login', query: { redirect: to.fullPath } })
+    return
   }
+
+  if (to.meta.requiresAdmin && user?.role !== 'admin') {
+    next({ path: '/' })
+    return
+  }
+
+  // Cegah admin akses halaman pasien
+  if (token && user?.role === 'admin' && to.path === '/') {
+    next({ path: '/admin' })
+    return
+  }
+
+  next()
 })
 
 export default router
