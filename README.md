@@ -159,4 +159,5 @@ http://localhost:5173
 SeuramoeSihat dikembangkan untuk mendukung transformasi layanan kesehatan digital di Aceh dengan menyediakan sistem reservasi dokter yang mudah, cepat, dan dapat diakses oleh masyarakat kapan saja dan di mana saja.
 
 ---
+<img width="1600" height="874" alt="image" src="https://github.com/user-attachments/assets/20484a0d-e039-4039-925d-45f7681c5386" />
 
