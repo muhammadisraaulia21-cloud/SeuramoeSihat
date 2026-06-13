@@ -160,6 +160,3 @@ SeuramoeSihat dikembangkan untuk mendukung transformasi layanan kesehatan digita
 
 ---
 
-## Lisensi
-
-Proyek ini dibuat untuk keperluan akademik dan pembelajaran pada mata kuliah Pemrograman Berbasis Web.
